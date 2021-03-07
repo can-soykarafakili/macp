@@ -1,7 +1,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "MACP"
-  spec.version      = "0.1.0"
+  spec.version      = "0.1.1"
   spec.summary      = "Test iOS adapter for MoPub"
   spec.description = <<-DESC
                      HyBid leverages first-look prebid technology to maximize yield for the publishers across
@@ -37,7 +37,7 @@ Pod::Spec.new do |spec|
     }
 
   spec.author       = { "Can Soykarafakili" => "can.soykarafakili@pubnative.net" }
-  spec.platform     = :ios, '9.0'
+  spec.platform     = :ios, '10.0'
   spec.source       = { :git => "https://github.com/can-soykarafakili/macp.git", :branch => "master" }
 
   spec.source_files = 'MACP/**/*.{swift,h,m}'
