@@ -1,5 +1,5 @@
 //
-//  Copyright © 2018 PubNative. All rights reserved.
+//  Copyright © 2020 PubNative. All rights reserved.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -23,13 +23,14 @@
 #if __has_include(<MoPubSDK/MoPub.h>)
 #import <MoPubSDK/MoPub.h>
 #else
-#import "MPNativeCustomEvent.h"
-#import "MPNativeAd.h"
+#import "MPInlineAdAdapter.h"
 #import "MPLogging.h"
+#import "MPConstants.h"
+#import "MPError.h"
 #endif
 
 #import <HyBid/HyBid.h>
 
-@interface HyBidMoPubMediationNativeAdCustomEvent : MPNativeCustomEvent
+@interface HyBidMoPubHeaderBiddingMRectVideoCustomEvent : MPInlineAdAdapter
 
 @end

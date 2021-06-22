@@ -1,5 +1,5 @@
 //
-//  Copyright © 2018 PubNative. All rights reserved.
+//  Copyright © 2020 PubNative. All rights reserved.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -20,22 +20,24 @@
 //  THE SOFTWARE.
 //
 
-#import "HyBidMoPubHeaderBiddingInterstitialCustomEvent.h"
+#import "HyBidMoPubHeaderBiddingRewardedCustomEvent.h"
 #import "HyBidMoPubUtils.h"
+#import "HyBidRewardedPresenter.h"
+#import "HyBidRewardedPresenterFactory.h"
 
-@interface HyBidMoPubHeaderBiddingInterstitialCustomEvent () <HyBidInterstitialPresenterDelegate>
+@interface HyBidMoPubHeaderBiddingRewardedCustomEvent () <HyBidRewardedPresenterDelegate>
 
-@property (nonatomic, strong) HyBidInterstitialPresenter *interstitialPresenter;
-@property (nonatomic, strong) HyBidInterstitialPresenterFactory *interstitalPresenterFactory;
+@property (nonatomic, strong) HyBidRewardedPresenter *rewardedPresenter;
+@property (nonatomic, strong) HyBidRewardedPresenterFactory *rewardedPresenterFactory;
 @property (nonatomic, strong) HyBidAd *ad;
 
 @end
 
-@implementation HyBidMoPubHeaderBiddingInterstitialCustomEvent
+@implementation HyBidMoPubHeaderBiddingRewardedCustomEvent
 
 - (void)dealloc {
-    self.interstitialPresenter = nil;
-    self.interstitalPresenterFactory = nil;
+    self.rewardedPresenter = nil;
+    self.rewardedPresenterFactory = nil;
     self.ad = nil;
 }
 
@@ -46,33 +48,36 @@
             [self invokeFailWithMessage:[NSString stringWithFormat:@"Could not find an ad in the cache for zone id with key: %@", [HyBidMoPubUtils zoneID:info]]];
             return;
         }
-        self.interstitalPresenterFactory = [[HyBidInterstitialPresenterFactory alloc] init];
-        self.interstitialPresenter = [self.interstitalPresenterFactory createInterstitalPresenterWithAd:self.ad withSkipOffset:[HyBidSettings sharedInstance].skipOffset withCloseOnFinish:[HyBidSettings sharedInstance].closeOnFinish withDelegate:self];
-        if (!self.interstitialPresenter) {
-            [self invokeFailWithMessage:@"Could not create valid interstitial presenter."];
+        
+        self.rewardedPresenterFactory = [[HyBidRewardedPresenterFactory alloc] init];
+        self.rewardedPresenter = [self.rewardedPresenterFactory createRewardedPresenterWithAd:self.ad withDelegate:self];
+        
+        if (!self.rewardedPresenter) {
+            [self invokeFailWithMessage:@"Could not create valid rewarded presenter."];
             return;
         } else {
-            [self.interstitialPresenter load];
+            [self.rewardedPresenter load];
             MPLogEvent([MPLogEvent adLoadAttemptForAdapter:NSStringFromClass([self class]) dspCreativeId:nil dspName:nil]);
         }
     } else {
-        [self invokeFailWithMessage:@"Failed interstitial ad fetch. Missing required server extras."];
+        [self invokeFailWithMessage:@"Failed rewarded ad fetch. Missing required server extras."];
         return;
     }
 }
 
-- (BOOL)isRewardExpected {
-    return NO;
-}
-
 - (void)presentAdFromViewController:(UIViewController *)viewController {
     [self.delegate fullscreenAdAdapterAdWillPresent:self];
-    if ([self.interstitialPresenter respondsToSelector:@selector(showFromViewController:)]) {
-        [self.interstitialPresenter showFromViewController:viewController];
+    if ([self.rewardedPresenter respondsToSelector:@selector(showFromViewController:)]) {
+        [self.rewardedPresenter showFromViewController:viewController];
     } else {
-        [self.interstitialPresenter show];
+        [self.rewardedPresenter show];
     }
     MPLogEvent([MPLogEvent adShowAttemptForAdapter:NSStringFromClass([self class])]);
+}
+
+
+- (BOOL)isRewardExpected {
+    return NO;
 }
 
 - (void)invokeFailWithMessage:(NSString *)message {
@@ -82,31 +87,20 @@
                                                                                      userInfo:nil]];
 }
 
-- (BOOL)enableAutomaticImpressionAndClickTracking {
-    return NO;
+#pragma mark - HyBidRewardedPresenterDelegate
+
+- (void)rewardedPresenter:(HyBidRewardedPresenter *)rewardedPresenter didFailWithError:(NSError *)error {
+    MPLogEvent([MPLogEvent adLoadFailedForAdapter:NSStringFromClass([self class]) error:error]);
+    [self invokeFailWithMessage:error.localizedDescription];
 }
 
-#pragma mark - HyBidInterstitialPresenterDelegate
-
-- (void)interstitialPresenterDidLoad:(HyBidInterstitialPresenter *)interstitialPresenter {
-    [self.delegate fullscreenAdAdapterDidLoadAd:self];
-    MPLogEvent([MPLogEvent adLoadSuccessForAdapter:NSStringFromClass([self class])]);
-}
-
-- (void)interstitialPresenterDidShow:(HyBidInterstitialPresenter *)interstitialPresenter {
-    [self.delegate fullscreenAdAdapterAdDidPresent:self];
-    MPLogEvent([MPLogEvent adDidAppearForAdapter:NSStringFromClass([self class])]);
-    [self.delegate fullscreenAdAdapterDidTrackImpression:self];
-    MPLogEvent([MPLogEvent adShowSuccessForAdapter:NSStringFromClass([self class])]);
-}
-
-- (void)interstitialPresenterDidClick:(HyBidInterstitialPresenter *)interstitialPresenter {
+- (void)rewardedPresenterDidClick:(HyBidRewardedPresenter *)rewardedPresenter {
     [self.delegate fullscreenAdAdapterDidTrackClick:self];
     MPLogEvent([MPLogEvent adTappedForAdapter:NSStringFromClass([self class])]);
     [self.delegate fullscreenAdAdapterWillLeaveApplication:self];
 }
 
-- (void)interstitialPresenterDidDismiss:(HyBidInterstitialPresenter *)interstitialPresenter {
+- (void)rewardedPresenterDidDismiss:(HyBidRewardedPresenter *)rewardedPresenter {
     [self.delegate fullscreenAdAdapterAdWillDismiss:self];
     [self.delegate fullscreenAdAdapterAdWillDisappear:self];
     MPLogEvent([MPLogEvent adWillDisappearForAdapter:NSStringFromClass([self class])]);
@@ -116,9 +110,22 @@
     MPLogEvent([MPLogEvent adDidDisappearForAdapter:NSStringFromClass([self class])]);
 }
 
-- (void)interstitialPresenter:(HyBidInterstitialPresenter *)interstitialPresenter didFailWithError:(NSError *)error {
-    MPLogEvent([MPLogEvent adLoadFailedForAdapter:NSStringFromClass([self class]) error:error]);
-    [self invokeFailWithMessage:error.localizedDescription];
+- (void)rewardedPresenterDidFinish:(HyBidRewardedPresenter *)rewardedPresenter {
+    MPReward *reward = [[MPReward alloc] initWithCurrencyType:@"hybid_reward" amount:0];
+    [self.delegate fullscreenAdAdapter:self willRewardUser:reward];
+    MPLogEvent([MPLogEvent adShouldRewardUserWithReward:reward]);
+}
+
+- (void)rewardedPresenterDidLoad:(HyBidRewardedPresenter *)rewardedPresenter {
+    [self.delegate fullscreenAdAdapterDidLoadAd:self];
+    MPLogEvent([MPLogEvent adLoadSuccessForAdapter:NSStringFromClass([self class])]);
+}
+
+- (void)rewardedPresenterDidShow:(HyBidRewardedPresenter *)rewardedPresenter {
+    [self.delegate fullscreenAdAdapterAdDidPresent:self];
+    MPLogEvent([MPLogEvent adDidAppearForAdapter:NSStringFromClass([self class])]);
+    [self.delegate fullscreenAdAdapterDidTrackImpression:self];
+    MPLogEvent([MPLogEvent adShowSuccessForAdapter:NSStringFromClass([self class])]);
 }
 
 @end

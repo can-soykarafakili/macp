@@ -1,5 +1,5 @@
 //
-//  Copyright © 2018 PubNative. All rights reserved.
+//  Copyright © 2020 PubNative. All rights reserved.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +20,10 @@
 //  THE SOFTWARE.
 //
 
-#import "HyBidMoPubHeaderBiddingInterstitialCustomEvent.h"
+#import "HyBidMoPubHeaderBiddingInterstitialVideoCustomEvent.h"
 #import "HyBidMoPubUtils.h"
 
-@interface HyBidMoPubHeaderBiddingInterstitialCustomEvent () <HyBidInterstitialPresenterDelegate>
+@interface HyBidMoPubHeaderBiddingInterstitialVideoCustomEvent () <HyBidInterstitialPresenterDelegate>
 
 @property (nonatomic, strong) HyBidInterstitialPresenter *interstitialPresenter;
 @property (nonatomic, strong) HyBidInterstitialPresenterFactory *interstitalPresenterFactory;
@@ -31,7 +31,7 @@
 
 @end
 
-@implementation HyBidMoPubHeaderBiddingInterstitialCustomEvent
+@implementation HyBidMoPubHeaderBiddingInterstitialVideoCustomEvent
 
 - (void)dealloc {
     self.interstitialPresenter = nil;
@@ -46,6 +46,13 @@
             [self invokeFailWithMessage:[NSString stringWithFormat:@"Could not find an ad in the cache for zone id with key: %@", [HyBidMoPubUtils zoneID:info]]];
             return;
         }
+        
+        if (self.ad.vast != nil) {
+            self.ad.adType = kHyBidAdTypeVideo;
+        } else {
+            self.ad.adType = kHyBidAdTypeHTML;
+        }
+        
         self.interstitalPresenterFactory = [[HyBidInterstitialPresenterFactory alloc] init];
         self.interstitialPresenter = [self.interstitalPresenterFactory createInterstitalPresenterWithAd:self.ad withSkipOffset:[HyBidSettings sharedInstance].skipOffset withCloseOnFinish:[HyBidSettings sharedInstance].closeOnFinish withDelegate:self];
         if (!self.interstitialPresenter) {
