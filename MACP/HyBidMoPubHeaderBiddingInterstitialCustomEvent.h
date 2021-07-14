@@ -30,7 +30,6 @@
 
 #import <HyBid/HyBid.h>
 
-
 @interface HyBidMoPubHeaderBiddingInterstitialCustomEvent : MPFullscreenAdAdapter
 
 @end
